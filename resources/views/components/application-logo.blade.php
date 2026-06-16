@@ -1,0 +1,1 @@
+<img src="/images/goodgo_logo_full.png" alt="Save My Bike Logo" style="width: 200px">
