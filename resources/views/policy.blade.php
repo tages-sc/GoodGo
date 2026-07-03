@@ -12,7 +12,7 @@
             <div class="w-full sm:max-w-2xl mt-6 p-6 bg-white dark:bg-gray-800 shadow-md overflow-hidden sm:rounded-lg">
                 @if($privacyPolicy)
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">{{ $privacyPolicy->title }}</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Versione {{ $privacyPolicy->version }} - Pubblicata il {{ $privacyPolicy->published_at?->format('d/m/Y') }}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Versione {{ $privacyPolicy->version }} - Pubblicata il {{ local_dt($privacyPolicy->published_at, 'd/m/Y') }}</p>
                     <div class="prose dark:prose-invert max-w-none">
                         {!! nl2br(e($privacyPolicy->content)) !!}
                     </div>

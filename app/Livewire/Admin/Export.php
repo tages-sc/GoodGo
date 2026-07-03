@@ -58,8 +58,8 @@ class Export extends Component
                 $user->platform ? ucfirst($user->platform) : 'Backoffice',
                 number_format($user->credits, 2, ',', '.'),
                 $user->email_verified_at ? 'Sì' : 'No',
-                $user->created_at?->format('d/m/Y H:i'),
-                $user->last_login_at?->format('d/m/Y H:i') ?? '-',
+                local_dt($user->created_at, 'd/m/Y H:i'),
+                local_dt($user->last_login_at, 'd/m/Y H:i') ?: '-',
             ];
         });
     }
@@ -126,8 +126,8 @@ class Export extends Component
                 $movement->competition?->name ?? '-',
                 $movement->partner?->name ?? '-',
                 $movement->description ?? '-',
-                $movement->created_at?->format('d/m/Y H:i'),
-                $movement->processed_at?->format('d/m/Y H:i'),
+                local_dt($movement->created_at, 'd/m/Y H:i'),
+                local_dt($movement->processed_at, 'd/m/Y H:i'),
             ];
         });
     }
@@ -161,8 +161,8 @@ class Export extends Component
                 number_format($movement->exchange_rate ?? 0, 4, ',', '.'),
                 $movement->competition?->name ?? '-',
                 $movement->description ?? '-',
-                $movement->created_at?->format('d/m/Y H:i'),
-                $movement->processed_at?->format('d/m/Y H:i'),
+                local_dt($movement->created_at, 'd/m/Y H:i'),
+                local_dt($movement->processed_at, 'd/m/Y H:i'),
                 $movement->processor?->name ?? '-',
             ];
         });

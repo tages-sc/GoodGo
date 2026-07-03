@@ -155,7 +155,7 @@
                                 @endif
                                 <div class="min-w-0">
                                     <p class="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">{{ $badge->display_name }}</p>
-                                    <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($badge->pivot->earned_at)->format('d/m/Y') }}</p>
+                                    <p class="text-xs text-gray-400">{{ local_dt($badge->pivot->earned_at, 'd/m/Y') }}</p>
                                 </div>
                             </div>
                         @endforeach

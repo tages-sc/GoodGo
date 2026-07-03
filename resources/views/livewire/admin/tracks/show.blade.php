@@ -99,7 +99,7 @@
                                 @endif
                                 <div class="flex justify-between">
                                     <dt class="text-sm text-gray-500 dark:text-gray-400">Data</dt>
-                                    <dd class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $track->started_at?->format('d/m/Y H:i') }}</dd>
+                                    <dd class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ local_dt($track->started_at, 'd/m/Y H:i') }}</dd>
                                 </div>
                                 <div class="flex justify-between">
                                     <dt class="text-sm text-gray-500 dark:text-gray-400">Durata</dt>
@@ -172,7 +172,7 @@
                                 <dl class="space-y-3">
                                     <div class="flex justify-between">
                                         <dt class="text-sm text-gray-500 dark:text-gray-400">Data</dt>
-                                        <dd class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $track->validated_at->format('d/m/Y H:i') }}</dd>
+                                        <dd class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ local_dt($track->validated_at, 'd/m/Y H:i') }}</dd>
                                     </div>
                                     @if($track->validator)
                                         <div class="flex justify-between">
@@ -346,7 +346,7 @@
                                     @foreach($validationLogs as $log)
                                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                                {{ $log->created_at->format('d/m/Y H:i') }}
+                                                {{ local_dt($log->created_at, 'd/m/Y H:i') }}
                                             </td>
                                             <td class="px-4 py-3 whitespace-nowrap text-sm">
                                                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $log->previous_status->badgeClasses() }}">

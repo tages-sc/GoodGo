@@ -73,11 +73,11 @@
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Apertura Iscrizioni</p>
-                                    <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $competition->registration_start ? $competition->registration_start->format('d/m/Y H:i') : 'Non specificata' }}</p>
+                                    <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ local_dt($competition->registration_start, 'd/m/Y H:i') ?: 'Non specificata' }}</p>
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Chiusura Iscrizioni</p>
-                                    <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $competition->registration_end ? $competition->registration_end->format('d/m/Y H:i') : 'Non specificata' }}</p>
+                                    <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ local_dt($competition->registration_end, 'd/m/Y H:i') ?: 'Non specificata' }}</p>
                                 </div>
                             </div>
 

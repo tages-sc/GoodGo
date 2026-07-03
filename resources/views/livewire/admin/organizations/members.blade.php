@@ -93,10 +93,10 @@
                                             @endswitch
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {{ $member->pivot->requested_at ? \Carbon\Carbon::parse($member->pivot->requested_at)->format('d/m/Y H:i') : '-' }}
+                                            {{ local_dt($member->pivot->requested_at, 'd/m/Y H:i') ?: '-' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {{ $member->pivot->processed_at ? \Carbon\Carbon::parse($member->pivot->processed_at)->format('d/m/Y H:i') : '-' }}
+                                            {{ local_dt($member->pivot->processed_at, 'd/m/Y H:i') ?: '-' }}
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
                                             {{ $member->pivot->notes ?? '-' }}

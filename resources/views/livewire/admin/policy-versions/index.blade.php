@@ -80,7 +80,7 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {{ $policy->published_at?->format('d/m/Y H:i') ?? '-' }}
+                                            {{ local_dt($policy->published_at, 'd/m/Y H:i') ?: '-' }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             @if ($policy->status === 'draft')

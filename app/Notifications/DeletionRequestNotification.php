@@ -29,7 +29,7 @@ class DeletionRequestNotification extends Notification implements ShouldQueue
             ->line("L'utente **{$this->requester->name}** ({$this->requester->email}) ha richiesto la cancellazione del proprio account.")
             ->line("**Tipo utente:** {$this->requester->type->label()}")
             ->line("**ID utente:** #{$this->requester->id}")
-            ->line("**Data richiesta:** " . now()->format('d/m/Y H:i'))
+            ->line("**Data richiesta:** " . local_dt(now(), 'd/m/Y H:i'))
             ->action('Vai al dettaglio utente', url("/admin/users/{$this->requester->id}"))
             ->line('Verifica i dati associati e procedi con la cancellazione manuale se opportuno.');
     }

@@ -84,13 +84,13 @@
                                 @if($competition->registration_start)
                                     <div>
                                         <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Apertura Iscrizioni</span>
-                                        <p class="text-sm text-gray-900 dark:text-gray-100">{{ $competition->registration_start->format('d/m/Y H:i') }}</p>
+                                        <p class="text-sm text-gray-900 dark:text-gray-100">{{ local_dt($competition->registration_start, 'd/m/Y H:i') }}</p>
                                     </div>
                                 @endif
                                 @if($competition->registration_end)
                                     <div>
                                         <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Chiusura Iscrizioni</span>
-                                        <p class="text-sm text-gray-900 dark:text-gray-100">{{ $competition->registration_end->format('d/m/Y H:i') }}</p>
+                                        <p class="text-sm text-gray-900 dark:text-gray-100">{{ local_dt($competition->registration_end, 'd/m/Y H:i') }}</p>
                                     </div>
                                 @endif
                             </div>

@@ -32,7 +32,7 @@ class ExportPersonalData extends Component
             fputcsv($handle, ['Email', $user->email], ';');
             fputcsv($handle, ['Tipo', $user->type->label()], ';');
             fputcsv($handle, ['Crediti', number_format($user->credits, 2, ',', '.')], ';');
-            fputcsv($handle, ['Data Registrazione', $user->created_at?->format('d/m/Y H:i')], ';');
+            fputcsv($handle, ['Data Registrazione', local_dt($user->created_at, 'd/m/Y H:i')], ';');
 
             if ($user->profile) {
                 fputcsv($handle, ['Username', $user->profile->username ?? '-'], ';');
@@ -49,7 +49,7 @@ class ExportPersonalData extends Component
                 fputcsv($handle, [
                     $comp->name,
                     $comp->pivot->status ?? '-',
-                    $comp->pivot->registered_at?->format('d/m/Y H:i') ?? '-',
+                    local_dt($comp->pivot->registered_at, 'd/m/Y H:i') ?: '-',
                     number_format($comp->pivot->total_credits ?? 0, 2, ',', '.'),
                     number_format($comp->pivot->total_distance_km ?? 0, 2, ',', '.'),
                     number_format($comp->pivot->total_co2_saved_kg ?? 0, 3, ',', '.'),
@@ -63,7 +63,7 @@ class ExportPersonalData extends Component
             foreach ($user->tracks as $track) {
                 fputcsv($handle, [
                     $track->id,
-                    $track->started_at?->format('d/m/Y H:i'),
+                    local_dt($track->started_at, 'd/m/Y H:i'),
                     $track->status->label(),
                     number_format(($track->total_distance_meters ?? 0) / 1000, 2, ',', '.'),
                     number_format(($track->co2_saved_grams ?? 0) / 1000, 3, ',', '.'),
@@ -84,7 +84,7 @@ class ExportPersonalData extends Component
                     number_format($movement->euro_amount ?? 0, 2, ',', '.'),
                     $movement->partner?->name ?? '-',
                     $movement->competition?->name ?? '-',
-                    $movement->created_at?->format('d/m/Y H:i'),
+                    local_dt($movement->created_at, 'd/m/Y H:i'),
                 ], ';');
             }
             fputcsv($handle, [], ';');
@@ -98,7 +98,7 @@ class ExportPersonalData extends Component
                     number_format($log->amount ?? 0, 2, ',', '.'),
                     number_format($log->balance_after ?? 0, 2, ',', '.'),
                     $log->description ?? '-',
-                    $log->created_at?->format('d/m/Y H:i'),
+                    local_dt($log->created_at, 'd/m/Y H:i'),
                 ], ';');
             }
             fputcsv($handle, [], ';');
@@ -110,7 +110,7 @@ class ExportPersonalData extends Component
                 fputcsv($handle, [
                     $badge->name,
                     $badge->category->label(),
-                    $badge->pivot->earned_at ? \Carbon\Carbon::parse($badge->pivot->earned_at)->format('d/m/Y H:i') : '-',
+                    local_dt($badge->pivot->earned_at, 'd/m/Y H:i') ?: '-',
                 ], ';');
             }
 

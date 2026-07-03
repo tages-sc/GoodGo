@@ -239,7 +239,7 @@
                                                 Calcolate automaticamente dal sistema quando il partner aggiorna l'indirizzo aziendale (geocoding via OpenStreetMap).
                                                 Modifica manuale riservata al Super Admin per casi di geocoding fallito o impreciso.
                                                 @if($user->partnerProfile?->geocoded_at)
-                                                    <br><span class="text-gray-400">Ultima geolocalizzazione: {{ $user->partnerProfile->geocoded_at->format('d/m/Y H:i') }}</span>
+                                                    <br><span class="text-gray-400">Ultima geolocalizzazione: {{ local_dt($user->partnerProfile->geocoded_at, 'd/m/Y H:i') }}</span>
                                                 @endif
                                             </p>
                                         </div>
@@ -564,15 +564,15 @@
                                 </div>
                                 <div>
                                     <dt class="text-gray-500 dark:text-gray-400">Registrato il</dt>
-                                    <dd class="text-gray-900 dark:text-gray-100">{{ $user->created_at->format('d/m/Y H:i') }}</dd>
+                                    <dd class="text-gray-900 dark:text-gray-100">{{ local_dt($user->created_at, 'd/m/Y H:i') }}</dd>
                                 </div>
                                 <div>
                                     <dt class="text-gray-500 dark:text-gray-400">Ultimo aggiornamento</dt>
-                                    <dd class="text-gray-900 dark:text-gray-100">{{ $user->updated_at->format('d/m/Y H:i') }}</dd>
+                                    <dd class="text-gray-900 dark:text-gray-100">{{ local_dt($user->updated_at, 'd/m/Y H:i') }}</dd>
                                 </div>
                                 <div>
                                     <dt class="text-gray-500 dark:text-gray-400">Email verificata il</dt>
-                                    <dd class="text-gray-900 dark:text-gray-100">{{ $user->email_verified_at ? $user->email_verified_at->format('d/m/Y H:i') : 'Mai' }}</dd>
+                                    <dd class="text-gray-900 dark:text-gray-100">{{ local_dt($user->email_verified_at, 'd/m/Y H:i') ?: 'Mai' }}</dd>
                                 </div>
                             </dl>
                         </div>

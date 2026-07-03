@@ -71,7 +71,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="text-sm text-gray-900 dark:text-gray-100">
-                                                {{ $member->pivot->requested_at ? \Carbon\Carbon::parse($member->pivot->requested_at)->format('d/m/Y H:i') : $member->pivot->created_at->format('d/m/Y H:i') }}
+                                                {{ local_dt($member->pivot->requested_at, 'd/m/Y H:i') ?: local_dt($member->pivot->created_at, 'd/m/Y H:i') }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-center">

@@ -32,9 +32,12 @@ class VerifyEmailController extends Controller
             abort(403, __('Il link di verifica non è valido.'));
         }
 
-        $alreadyVerified = $user->hasVerifiedEmail();
-
-        if (! $alreadyVerified) {
+        // La verifica è idempotente: se l'email era già verificata (es. link
+        // pre-caricato dagli scanner antivirus della posta o dalle anteprime
+        // dei messaggi, che fanno una GET prima del click umano) l'esito per
+        // l'utente è identico. Mostriamo quindi un unico messaggio positivo,
+        // per non generare confusione con un fuorviante "già verificata".
+        if (! $user->hasVerifiedEmail()) {
             $user->markEmailAsVerified();
             event(new Verified($user));
         }
@@ -47,10 +50,7 @@ class VerifyEmailController extends Controller
             $request->session()->regenerateToken();
         }
 
-        $message = $alreadyVerified
-            ? __('Questa email risulta già verificata, accedi con le tue credenziali.')
-            : __('Email verificata, accedi con le tue credenziali.');
-
-        return redirect()->route('login')->with('status', $message);
+        return redirect()->route('login')
+            ->with('status', __('Email verificata! Ora puoi accedere con le tue credenziali.'));
     }
 }

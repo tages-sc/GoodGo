@@ -179,7 +179,7 @@
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap">
                                             <span class="text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $user->created_at->format('d/m/Y H:i') }}
+                                                {{ local_dt($user->created_at, 'd/m/Y H:i') }}
                                             </span>
                                         </td>
                                         <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">

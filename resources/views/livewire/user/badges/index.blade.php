@@ -60,7 +60,7 @@
                                         </div>
                                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ $badge->description }}</p>
                                         <p class="text-xs text-indigo-500 dark:text-indigo-400 mt-2">
-                                            Ottenuto il {{ isset($earnedDates[$badge->id]) ? \Carbon\Carbon::parse($earnedDates[$badge->id])->format('d/m/Y') : '-' }}
+                                            Ottenuto il {{ isset($earnedDates[$badge->id]) ? local_dt($earnedDates[$badge->id], 'd/m/Y') : '-' }}
                                         </p>
                                     </div>
                                 </div>

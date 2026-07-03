@@ -311,7 +311,7 @@
                                 <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $winner->id }}</td>
                                 <td class="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{{ $winner->name }}</td>
                                 <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{{ $winner->email }}</td>
-                                <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{{ \Carbon\Carbon::parse($winner->pivot->earned_at)->format('d/m/Y H:i') }}</td>
+                                <td class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">{{ local_dt($winner->pivot->earned_at, 'd/m/Y H:i') }}</td>
                             </tr>
                         @endforeach
                     </tbody>

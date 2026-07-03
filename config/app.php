@@ -63,9 +63,25 @@ return [
     | will be used by the PHP date and date-time functions. The timezone
     | is set to "UTC" by default as it is suitable for most use cases.
     |
+    | I timestamp vengono SEMPRE salvati in UTC (best practice). Per la
+    | visualizzazione all'utente si usa "display_timezone" (Europe/Rome),
+    | applicata tramite l'helper local_dt(). Vedi app/Support/helpers.php.
+    |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Display Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Fuso orario usato SOLO per mostrare le date all'utente (backoffice web,
+    | export CSV, email). Non influenza il salvataggio, che resta in UTC.
+    |
+    */
+
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Europe/Rome'),
 
     /*
     |--------------------------------------------------------------------------

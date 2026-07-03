@@ -63,8 +63,8 @@ class Show extends Component
             fputcsv($handle, ['Tipo', $user->type->label()], ';');
             fputcsv($handle, ['Piattaforma', $user->platform ?? '-'], ';');
             fputcsv($handle, ['Crediti', number_format($user->credits, 2, ',', '.')], ';');
-            fputcsv($handle, ['Data Registrazione', $user->created_at?->format('d/m/Y H:i')], ';');
-            fputcsv($handle, ['Email Verificata', $user->email_verified_at?->format('d/m/Y H:i') ?? 'No'], ';');
+            fputcsv($handle, ['Data Registrazione', local_dt($user->created_at, 'd/m/Y H:i')], ';');
+            fputcsv($handle, ['Email Verificata', local_dt($user->email_verified_at, 'd/m/Y H:i') ?: 'No'], ';');
 
             if ($user->profile) {
                 fputcsv($handle, ['Username', $user->profile->username ?? '-'], ';');
@@ -81,7 +81,7 @@ class Show extends Component
                     $comp->id,
                     $comp->name,
                     $comp->pivot->status ?? '-',
-                    $comp->pivot->registered_at?->format('d/m/Y H:i') ?? '-',
+                    local_dt($comp->pivot->registered_at, 'd/m/Y H:i') ?: '-',
                     number_format($comp->pivot->total_credits ?? 0, 2, ',', '.'),
                 ], ';');
             }
@@ -93,7 +93,7 @@ class Show extends Component
             foreach ($user->tracks as $track) {
                 fputcsv($handle, [
                     $track->id,
-                    $track->started_at?->format('d/m/Y H:i'),
+                    local_dt($track->started_at, 'd/m/Y H:i'),
                     $track->status->label(),
                     number_format(($track->total_distance_meters ?? 0) / 1000, 2, ',', '.'),
                     number_format(($track->co2_saved_grams ?? 0) / 1000, 3, ',', '.'),
@@ -115,7 +115,7 @@ class Show extends Component
                     number_format($movement->euro_amount ?? 0, 2, ',', '.'),
                     $movement->partner?->name ?? '-',
                     $movement->competition?->name ?? '-',
-                    $movement->created_at?->format('d/m/Y H:i'),
+                    local_dt($movement->created_at, 'd/m/Y H:i'),
                 ], ';');
             }
             fputcsv($handle, [], ';');
@@ -130,7 +130,7 @@ class Show extends Component
                     number_format($log->amount ?? 0, 2, ',', '.'),
                     number_format($log->balance_after ?? 0, 2, ',', '.'),
                     $log->description ?? '-',
-                    $log->created_at?->format('d/m/Y H:i'),
+                    local_dt($log->created_at, 'd/m/Y H:i'),
                 ], ';');
             }
             fputcsv($handle, [], ';');
@@ -143,7 +143,7 @@ class Show extends Component
                     $badge->name,
                     $badge->category->label(),
                     $badge->stars ?? 0,
-                    $badge->pivot->earned_at ? \Carbon\Carbon::parse($badge->pivot->earned_at)->format('d/m/Y H:i') : '-',
+                    local_dt($badge->pivot->earned_at, 'd/m/Y H:i') ?: '-',
                 ], ';');
             }
 

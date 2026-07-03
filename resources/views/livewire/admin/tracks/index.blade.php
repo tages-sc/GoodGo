@@ -95,10 +95,10 @@
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900 dark:text-gray-100">
-                                                {{ $track->started_at?->format('d/m/Y') }}
+                                                {{ local_dt($track->started_at, 'd/m/Y') }}
                                             </div>
                                             <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                {{ $track->started_at?->format('H:i') }} - {{ $track->ended_at?->format('H:i') }}
+                                                {{ local_dt($track->started_at, 'H:i') }} - {{ local_dt($track->ended_at, 'H:i') }}
                                             </div>
                                         </td>
                                         <td class="px-4 py-4 whitespace-nowrap text-center">

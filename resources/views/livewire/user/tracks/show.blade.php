@@ -52,11 +52,11 @@
                             </div>
                             <div class="flex justify-between">
                                 <dt class="text-gray-500 dark:text-gray-400">Inizio</dt>
-                                <dd class="text-gray-900 dark:text-gray-100">{{ $track->started_at?->format('d/m/Y H:i:s') }}</dd>
+                                <dd class="text-gray-900 dark:text-gray-100">{{ local_dt($track->started_at, 'd/m/Y H:i:s') }}</dd>
                             </div>
                             <div class="flex justify-between">
                                 <dt class="text-gray-500 dark:text-gray-400">Fine</dt>
-                                <dd class="text-gray-900 dark:text-gray-100">{{ $track->ended_at?->format('d/m/Y H:i:s') }}</dd>
+                                <dd class="text-gray-900 dark:text-gray-100">{{ local_dt($track->ended_at, 'd/m/Y H:i:s') }}</dd>
                             </div>
                             <div class="flex justify-between">
                                 <dt class="text-gray-500 dark:text-gray-400">Durata</dt>

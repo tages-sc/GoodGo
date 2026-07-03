@@ -152,11 +152,11 @@
                                     </div>
                                     <div class="flex justify-between">
                                         <dt class="text-sm text-gray-500 dark:text-gray-400">Registrato il</dt>
-                                        <dd class="text-sm text-gray-900 dark:text-gray-100">{{ $user->created_at->format('d/m/Y H:i') }}</dd>
+                                        <dd class="text-sm text-gray-900 dark:text-gray-100">{{ local_dt($user->created_at, 'd/m/Y H:i') }}</dd>
                                     </div>
                                     <div class="flex justify-between">
                                         <dt class="text-sm text-gray-500 dark:text-gray-400">Email verificata</dt>
-                                        <dd class="text-sm text-gray-900 dark:text-gray-100">{{ $user->email_verified_at ? $user->email_verified_at->format('d/m/Y H:i') : 'No' }}</dd>
+                                        <dd class="text-sm text-gray-900 dark:text-gray-100">{{ local_dt($user->email_verified_at, 'd/m/Y H:i') ?: 'No' }}</dd>
                                     </div>
                                 </dl>
                             </div>
@@ -169,7 +169,7 @@
                                         <dt class="text-sm text-gray-500 dark:text-gray-400">Privacy accettata</dt>
                                         <dd class="text-sm text-gray-900 dark:text-gray-100">
                                             @if($user->privacy_accepted_at)
-                                                {{ $user->privacy_accepted_at->format('d/m/Y H:i') }}
+                                                {{ local_dt($user->privacy_accepted_at, 'd/m/Y H:i') }}
                                                 @if($user->privacy_version_id)
                                                     <span class="text-xs text-gray-500">(v{{ $user->privacy_version_id }})</span>
                                                 @endif
@@ -182,7 +182,7 @@
                                         <dt class="text-sm text-gray-500 dark:text-gray-400">Termini accettati</dt>
                                         <dd class="text-sm text-gray-900 dark:text-gray-100">
                                             @if($user->terms_accepted_at)
-                                                {{ $user->terms_accepted_at->format('d/m/Y H:i') }}
+                                                {{ local_dt($user->terms_accepted_at, 'd/m/Y H:i') }}
                                                 @if($user->terms_version_id)
                                                     <span class="text-xs text-gray-500">(v{{ $user->terms_version_id }})</span>
                                                 @endif
@@ -323,7 +323,7 @@
                                                 {{ $competition->pivot->rank ?? '-' }}
                                             </td>
                                             <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $competition->pivot->registered_at ? \Carbon\Carbon::parse($competition->pivot->registered_at)->format('d/m/Y H:i') : '-' }}
+                                                {{ local_dt($competition->pivot->registered_at, 'd/m/Y H:i') ?: '-' }}
                                             </td>
                                         </tr>
                                     @empty
@@ -374,10 +374,10 @@
                                                 </span>
                                             </td>
                                             <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $ente->pivot->requested_at ? \Carbon\Carbon::parse($ente->pivot->requested_at)->format('d/m/Y H:i') : '-' }}
+                                                {{ local_dt($ente->pivot->requested_at, 'd/m/Y H:i') ?: '-' }}
                                             </td>
                                             <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $ente->pivot->processed_at ? \Carbon\Carbon::parse($ente->pivot->processed_at)->format('d/m/Y H:i') : '-' }}
+                                                {{ local_dt($ente->pivot->processed_at, 'd/m/Y H:i') ?: '-' }}
                                             </td>
                                         </tr>
                                     @empty
@@ -425,7 +425,7 @@
                                                 {{ number_format($track->credits_earned ?? 0, 2, ',', '.') }}
                                             </td>
                                             <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $track->created_at->format('d/m/Y H:i') }}
+                                                {{ local_dt($track->created_at, 'd/m/Y H:i') }}
                                             </td>
                                             <td class="px-4 py-3 text-right">
                                                 <a href="{{ route('admin.tracks.show', $track) }}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
@@ -482,7 +482,7 @@
                                                 {{ number_format($movement->euro_amount ?? 0, 2, ',', '.') }} €
                                             </td>
                                             <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $movement->created_at->format('d/m/Y H:i') }}
+                                                {{ local_dt($movement->created_at, 'd/m/Y H:i') }}
                                             </td>
                                         </tr>
                                     @empty
@@ -532,7 +532,7 @@
                                                 {{ $spesa->formatted_euro }}
                                             </td>
                                             <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $spesa->processed_at?->format('d/m/Y H:i') ?? $spesa->created_at->format('d/m/Y H:i') }}
+                                                {{ local_dt($spesa->processed_at, 'd/m/Y H:i') ?: local_dt($spesa->created_at, 'd/m/Y H:i') }}
                                             </td>
                                             <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                                 {{ $spesa->processor?->name ?? '-' }}
@@ -569,7 +569,7 @@
                                     @forelse($creditLogs as $log)
                                         <tr>
                                             <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                                {{ $log->created_at->format('d/m/Y H:i') }}
+                                                {{ local_dt($log->created_at, 'd/m/Y H:i') }}
                                             </td>
                                             <td class="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                                                 {{ $log->type->label() }}
@@ -645,7 +645,7 @@
                                                 @endif
                                             </td>
                                             <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                                {{ \Carbon\Carbon::parse($badge->pivot->earned_at)->format('d/m/Y H:i') }}
+                                                {{ local_dt($badge->pivot->earned_at, 'd/m/Y H:i') }}
                                             </td>
                                         </tr>
                                     @empty

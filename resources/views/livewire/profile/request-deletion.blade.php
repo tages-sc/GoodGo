@@ -18,7 +18,7 @@
                     </div>
                     <div class="ml-3">
                         <p class="text-sm text-yellow-700 dark:text-yellow-300">
-                            Hai richiesto la cancellazione del tuo account il <strong>{{ $deletionRequestedAt->format('d/m/Y H:i') }}</strong>.
+                            Hai richiesto la cancellazione del tuo account il <strong>{{ local_dt($deletionRequestedAt, 'd/m/Y H:i') }}</strong>.
                             L'amministratore verificherà i dati associati al tuo ruolo e procederà con la cancellazione.
                         </p>
                     </div>

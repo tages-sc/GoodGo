@@ -78,11 +78,11 @@
                             </div>
                             <div class="flex justify-between">
                                 <dt class="text-gray-500 dark:text-gray-400">Inizio</dt>
-                                <dd class="text-gray-900 dark:text-gray-100">{{ $track->started_at?->format('d/m/Y H:i:s') }}</dd>
+                                <dd class="text-gray-900 dark:text-gray-100">{{ local_dt($track->started_at, 'd/m/Y H:i:s') }}</dd>
                             </div>
                             <div class="flex justify-between">
                                 <dt class="text-gray-500 dark:text-gray-400">Fine</dt>
-                                <dd class="text-gray-900 dark:text-gray-100">{{ $track->ended_at?->format('d/m/Y H:i:s') }}</dd>
+                                <dd class="text-gray-900 dark:text-gray-100">{{ local_dt($track->ended_at, 'd/m/Y H:i:s') }}</dd>
                             </div>
                             <div class="flex justify-between">
                                 <dt class="text-gray-500 dark:text-gray-400">Durata</dt>
@@ -132,7 +132,7 @@
                                 @if($track->validated_at)
                                     <div class="flex justify-between">
                                         <dt class="text-gray-500 dark:text-gray-400">Validata il</dt>
-                                        <dd class="text-gray-900 dark:text-gray-100">{{ $track->validated_at->format('d/m/Y H:i') }}</dd>
+                                        <dd class="text-gray-900 dark:text-gray-100">{{ local_dt($track->validated_at, 'd/m/Y H:i') }}</dd>
                                     </div>
                                 @endif
                                 @if($track->validator)
@@ -262,7 +262,7 @@
                                     @foreach($validationLogs as $log)
                                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                             <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                                {{ $log->created_at->format('d/m/Y H:i') }}
+                                                {{ local_dt($log->created_at, 'd/m/Y H:i') }}
                                             </td>
                                             <td class="px-4 py-3 whitespace-nowrap text-sm">
                                                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $log->previous_status->badgeClasses() }}">

@@ -277,10 +277,10 @@
                             <div class="mt-4 pt-4 border-t dark:border-gray-700">
                                 <div class="text-sm text-gray-600 dark:text-gray-300 space-y-1">
                                     @if($competition->registration_start)
-                                        <p>Apertura iscrizioni: <strong>{{ $competition->registration_start->format('d/m/Y H:i') }}</strong></p>
+                                        <p>Apertura iscrizioni: <strong>{{ local_dt($competition->registration_start, 'd/m/Y H:i') }}</strong></p>
                                     @endif
                                     @if($competition->registration_end)
-                                        <p>Chiusura iscrizioni: <strong>{{ $competition->registration_end->format('d/m/Y H:i') }}</strong></p>
+                                        <p>Chiusura iscrizioni: <strong>{{ local_dt($competition->registration_end, 'd/m/Y H:i') }}</strong></p>
                                     @endif
                                     @if($competition->max_participants)
                                         <p>Posti disponibili: <strong>{{ max(0, $competition->max_participants - ($competition->participants_count ?? 0)) }}/{{ $competition->max_participants }}</strong></p>

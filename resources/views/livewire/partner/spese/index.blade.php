@@ -105,7 +105,7 @@
                                         {{ $spesa->formatted_euro }}
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $spesa->processed_at?->format('d/m/Y H:i') ?? $spesa->created_at->format('d/m/Y H:i') }}
+                                        {{ local_dt($spesa->processed_at, 'd/m/Y H:i') ?: local_dt($spesa->created_at, 'd/m/Y H:i') }}
                                     </td>
                                 </tr>
                             @empty

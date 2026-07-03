@@ -88,7 +88,7 @@
                             @forelse($logs as $log)
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $log->created_at->format('d/m/Y H:i') }}
+                                        {{ local_dt($log->created_at, 'd/m/Y H:i') }}
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $log->type->badgeClasses() }}">

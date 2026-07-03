@@ -136,9 +136,9 @@
                                         </span>
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $movement->created_at->format('d/m/Y H:i') }}
+                                        {{ local_dt($movement->created_at, 'd/m/Y H:i') }}
                                         @if($movement->processed_at)
-                                            <div class="text-xs">Proc: {{ $movement->processed_at->format('d/m/Y H:i') }}</div>
+                                            <div class="text-xs">Proc: {{ local_dt($movement->processed_at, 'd/m/Y H:i') }}</div>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
