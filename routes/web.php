@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Livewire\Auth\RegisterPartner;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +13,13 @@ Route::get('/', function () {
 Route::get('/register/partner', RegisterPartner::class)
     ->middleware('guest')
     ->name('register.partner');
+
+// Verifica email tramite link firmato (non richiede autenticazione).
+// Sovrascrive la rotta di default di Fortify che richiederebbe il middleware
+// "auth", impedendo la verifica quando il link viene aperto senza login.
+Route::get('/email/verify/{id}/{hash}', VerifyEmailController::class)
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.verify');
 
 Route::middleware([
     'auth:sanctum',
