@@ -254,6 +254,64 @@
                         </div>
                     @endif
 
+                    {{-- Regolamento --}}
+                    @if($selectedCompetition->rules || $selectedCompetition->rules_document || $selectedCompetition->prizes)
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Regolamento e Premi</h4>
+
+                            @if($selectedCompetition->rules)
+                                <p class="text-gray-600 dark:text-gray-400 text-sm whitespace-pre-line mb-3">{{ $selectedCompetition->rules }}</p>
+                            @endif
+
+                            @if($selectedCompetition->rules_document)
+                                <div class="flex items-center gap-3 mb-2">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                    </svg>
+                                    <a href="{{ Storage::url($selectedCompetition->rules_document) }}" target="_blank" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+                                        Scarica il regolamento (PDF)
+                                    </a>
+                                </div>
+                            @endif
+
+                            @if($selectedCompetition->prizes)
+                                <div class="mt-3">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 uppercase">Premi</span>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm whitespace-pre-line mt-1">{{ $selectedCompetition->prizes }}</p>
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
+                    {{-- Documenti --}}
+                    @if($selectedCompetition->extra_document || $selectedCompetition->questionnaire_url)
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Documenti</h4>
+                            <div class="space-y-2">
+                                @if($selectedCompetition->extra_document)
+                                    <div class="flex items-center gap-3">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                        </svg>
+                                        <a href="{{ Storage::url($selectedCompetition->extra_document) }}" target="_blank" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            Documento Aggiuntivo
+                                        </a>
+                                    </div>
+                                @endif
+                                @if($selectedCompetition->questionnaire_url)
+                                    <div class="flex items-center gap-3">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                                        </svg>
+                                        <a href="{{ $selectedCompetition->questionnaire_url }}" target="_blank" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+                                            Questionario
+                                        </a>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- Info Crediti --}}
                     @if($selectedCompetition->credits_to_euro > 0)
                         <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
