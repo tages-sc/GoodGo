@@ -228,7 +228,7 @@
                     </div>
 
                     {{-- Regolamento e Premi --}}
-                    @if($competition->rules || $competition->prizes)
+                    @if($competition->rules || $competition->rules_document || $competition->prizes)
                         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
                             <div class="p-6">
                                 <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Regolamento e Premi</h4>
@@ -237,6 +237,20 @@
                                     <div class="mb-4">
                                         <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Regolamento</span>
                                         <p class="text-sm text-gray-900 dark:text-gray-100 mt-1 whitespace-pre-line">{{ $competition->rules }}</p>
+                                    </div>
+                                @endif
+
+                                @if($competition->rules_document)
+                                    <div class="mb-4">
+                                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Regolamento (PDF)</span>
+                                        <div class="flex items-center gap-3 mt-1">
+                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                            </svg>
+                                            <a href="{{ Storage::url($competition->rules_document) }}" target="_blank" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+                                                Scarica il regolamento
+                                            </a>
+                                        </div>
                                     </div>
                                 @endif
 

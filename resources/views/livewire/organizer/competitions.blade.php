@@ -462,6 +462,14 @@
                     <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Regolamento e Premi</h4>
                     <div class="space-y-4">
                         <div>
+                            <x-label for="rules_document" value="Regolamento (PDF)" />
+                            <input wire:model="rules_document" id="rules_document" type="file" accept=".pdf" class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900 dark:file:text-indigo-300 hover:file:bg-indigo-100" />
+                            <x-input-error for="rules_document" class="mt-2" />
+                            <x-file-remove-control field="rules_document" removeField="removeRulesDocument"
+                                :existing="$existingRulesDocument" :removeFlag="$removeRulesDocument" :editing="(bool) $editingId"
+                                label="Regolamento attuale" />
+                        </div>
+                        <div>
                             <x-label for="rules" value="Regolamento" />
                             <textarea wire:model="rules" id="rules" rows="4" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm"></textarea>
                             <x-input-error for="rules" class="mt-2" />
@@ -482,16 +490,25 @@
                             <x-label for="image" value="Immagine Principale" />
                             <input wire:model="image" id="image" type="file" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900 dark:file:text-indigo-300 hover:file:bg-indigo-100" />
                             <x-input-error for="image" class="mt-2" />
+                            <x-file-remove-control field="image" removeField="removeImage"
+                                :existing="$existingImage" :removeFlag="$removeImage" :editing="(bool) $editingId"
+                                label="Immagine attuale" />
                         </div>
                         <div>
                             <x-label for="banner" value="Banner" />
                             <input wire:model="banner" id="banner" type="file" accept="image/*" class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900 dark:file:text-indigo-300 hover:file:bg-indigo-100" />
                             <x-input-error for="banner" class="mt-2" />
+                            <x-file-remove-control field="banner" removeField="removeBanner"
+                                :existing="$existingBanner" :removeFlag="$removeBanner" :editing="(bool) $editingId"
+                                label="Banner attuale" />
                         </div>
                         <div>
                             <x-label for="extra_document" value="Documento Aggiuntivo (PDF, DOC)" />
                             <input wire:model="extra_document" id="extra_document" type="file" accept=".pdf,.doc,.docx" class="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900 dark:file:text-indigo-300 hover:file:bg-indigo-100" />
                             <x-input-error for="extra_document" class="mt-2" />
+                            <x-file-remove-control field="extra_document" removeField="removeExtraDocument"
+                                :existing="$existingExtraDocument" :removeFlag="$removeExtraDocument" :editing="(bool) $editingId"
+                                label="Documento attuale" />
                         </div>
                         <div>
                             <x-label for="questionnaire_url" value="URL Questionario" />
@@ -508,8 +525,14 @@
                 Annulla
             </x-secondary-button>
 
-            <x-button class="ms-3" wire:click="save">
-                {{ $editingId ? 'Aggiorna' : 'Crea' }}
+            <x-button class="ms-3" wire:click="save"
+                wire:loading.attr="disabled" wire:target="save,image,banner,rules_document,extra_document">
+                <span wire:loading.remove wire:target="image,banner,rules_document,extra_document">
+                    {{ $editingId ? 'Aggiorna' : 'Crea' }}
+                </span>
+                <span wire:loading wire:target="image,banner,rules_document,extra_document">
+                    Caricamento file...
+                </span>
             </x-button>
         </x-slot>
     </x-dialog-modal>

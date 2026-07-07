@@ -91,11 +91,23 @@
                     </div>
 
                     {{-- Regolamento --}}
-                    @if($competition->rules)
+                    @if($competition->rules || $competition->rules_document)
                         <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg">
                             <div class="p-6">
                                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">Regolamento</h3>
-                                <div class="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-line">{{ $competition->rules }}</div>
+                                @if($competition->rules)
+                                    <div class="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-line">{{ $competition->rules }}</div>
+                                @endif
+                                @if($competition->rules_document)
+                                    <div class="flex items-center gap-3 {{ $competition->rules ? 'mt-4' : '' }}">
+                                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                        </svg>
+                                        <a href="{{ asset('storage/' . $competition->rules_document) }}" target="_blank" class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                            Scarica il regolamento (PDF)
+                                        </a>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     @endif

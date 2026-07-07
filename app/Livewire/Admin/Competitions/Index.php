@@ -14,6 +14,7 @@ use App\Models\Municipality;
 use App\Models\Province;
 use App\Models\Region;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -76,6 +77,16 @@ class Index extends Component
     public ?string $questionnaire_url = null;
     public $rules_document = null;
     public $extra_document = null;
+
+    // Path dei file esistenti (popolati in modifica) e flag di rimozione
+    public ?string $existingImage = null;
+    public ?string $existingBanner = null;
+    public ?string $existingRulesDocument = null;
+    public ?string $existingExtraDocument = null;
+    public bool $removeImage = false;
+    public bool $removeBanner = false;
+    public bool $removeRulesDocument = false;
+    public bool $removeExtraDocument = false;
 
     // Form fields - Territory
     public array $allowed_region_ids = [];
@@ -171,6 +182,14 @@ class Index extends Component
         $this->description = $competition->description ?? '';
         $this->rules = $competition->rules ?? '';
         $this->prizes = $competition->prizes ?? '';
+        $this->existingImage = $competition->image;
+        $this->existingBanner = $competition->banner;
+        $this->existingRulesDocument = $competition->rules_document;
+        $this->existingExtraDocument = $competition->extra_document;
+        $this->removeImage = false;
+        $this->removeBanner = false;
+        $this->removeRulesDocument = false;
+        $this->removeExtraDocument = false;
         $this->ente_id = $competition->ente_id;
         $this->organizer_id = $competition->organizer_id;
         $this->start_date = $competition->start_date->format('Y-m-d');
@@ -264,18 +283,30 @@ class Index extends Component
 
         if ($this->image) {
             $data['image'] = $this->image->store('competitions', 'public');
+        } elseif ($this->removeImage && $this->existingImage) {
+            Storage::disk('public')->delete($this->existingImage);
+            $data['image'] = null;
         }
 
         if ($this->banner) {
             $data['banner'] = $this->banner->store('competitions/banners', 'public');
+        } elseif ($this->removeBanner && $this->existingBanner) {
+            Storage::disk('public')->delete($this->existingBanner);
+            $data['banner'] = null;
         }
 
         if ($this->rules_document) {
             $data['rules_document'] = $this->rules_document->store('competitions/rules', 'public');
+        } elseif ($this->removeRulesDocument && $this->existingRulesDocument) {
+            Storage::disk('public')->delete($this->existingRulesDocument);
+            $data['rules_document'] = null;
         }
 
         if ($this->extra_document) {
             $data['extra_document'] = $this->extra_document->store('competitions/documents', 'public');
+        } elseif ($this->removeExtraDocument && $this->existingExtraDocument) {
+            Storage::disk('public')->delete($this->existingExtraDocument);
+            $data['extra_document'] = null;
         }
 
         if ($this->editingId) {
@@ -390,6 +421,14 @@ class Index extends Component
         $this->questionnaire_url = null;
         $this->rules_document = null;
         $this->extra_document = null;
+        $this->existingImage = null;
+        $this->existingBanner = null;
+        $this->existingRulesDocument = null;
+        $this->existingExtraDocument = null;
+        $this->removeImage = false;
+        $this->removeBanner = false;
+        $this->removeRulesDocument = false;
+        $this->removeExtraDocument = false;
         $this->allowed_region_ids = [];
         $this->allowed_province_ids = [];
         $this->allowed_municipality_ids = [];
