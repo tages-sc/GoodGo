@@ -214,7 +214,7 @@ class ProfileController extends ApiController
 
             foreach ($tracks as $track) {
                 foreach ($track->segments as $segment) {
-                    $apiName = TransportMode::from($segment->transport_mode)->apiName();
+                    $apiName = $segment->transport_mode->apiName();
                     $km = round($segment->distance_meters / 1000, 2);
 
                     // bicycle e scooter usano lo stesso apiName per bike
@@ -299,7 +299,7 @@ class ProfileController extends ApiController
             $modes = $track->segments
                 ->pluck('transport_mode')
                 ->unique()
-                ->map(fn($mode) => TransportMode::from($mode)->apiName())
+                ->map(fn($mode) => $mode->apiName())
                 ->unique()
                 ->values()
                 ->toArray();

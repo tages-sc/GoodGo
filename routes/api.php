@@ -23,6 +23,9 @@ Route::prefix('v1')->middleware(['api.secret', 'api.locale'])->group(function ()
     // ==================== CONFIGURAZIONE ====================
     Route::get('/configuration', ConfigurationController::class);
 
+    // ==================== GARE PUBBLICHE (no auth, solo secret-key) ====================
+    Route::get('/competition-abstract/{id}', [CompetitionController::class, 'publicAbstract']);
+
     // ==================== AUTENTICAZIONE ====================
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/signup', [AuthController::class, 'signup']);

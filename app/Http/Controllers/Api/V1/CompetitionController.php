@@ -122,6 +122,61 @@ class CompetitionController extends ApiController
     }
 
     /**
+     * GET api/v1/competition-abstract/{id}
+     *
+     * Abstract pubblico di una gara: dati minimi visibili anche senza
+     * autenticazione (protetto dalla sola secret-key). Espone unicamente
+     * gare pubbliche e non in bozza (published/active/ended); qualsiasi
+     * altra gara (bozza, cancellata, privata) ritorna 404.
+     */
+    public function publicAbstract(int $id): JsonResponse
+    {
+        $competition = Competition::where('is_public', true)
+            ->whereIn('status', [
+                CompetitionStatus::PUBLISHED,
+                CompetitionStatus::ACTIVE,
+                CompetitionStatus::ENDED,
+            ])
+            ->find($id);
+
+        if (!$competition) {
+            return $this->error(404, 'Competition not found', 404);
+        }
+
+        // Modalità premi (coerente col campo 'type' del dettaglio gara)
+        $rewardMode = $competition->reward_mode?->value === 'ranking' ? 'Classifica' : 'Incrementale';
+
+        // Documenti allegati (regolamento + eventuale documento aggiuntivo)
+        $documents = [];
+        if ($competition->rules_document) {
+            $documents[] = [
+                'name' => 'Regolamento',
+                'url' => asset('storage/' . $competition->rules_document),
+            ];
+        }
+        if ($competition->extra_document) {
+            $documents[] = [
+                'name' => 'Documento aggiuntivo',
+                'url' => asset('storage/' . $competition->extra_document),
+            ];
+        }
+
+        return $this->success([
+            'id' => $competition->id,
+            'title' => $competition->name,
+            'type' => $rewardMode,
+            'extension_type' => $competition->competition_type?->label() ?? '',
+            'image' => $competition->image ? asset('storage/' . $competition->image) : '',
+            'banner' => $competition->banner ? asset('storage/' . $competition->banner) : '',
+            'date_start' => $competition->start_date?->format('Y-m-d') ?? '',
+            'date_end' => $competition->end_date?->format('Y-m-d') ?? '',
+            'registration_start' => $competition->registration_start?->format('Y-m-d H:i:s') ?? '',
+            'registration_end' => $competition->registration_end?->format('Y-m-d H:i:s') ?? '',
+            'documents' => $documents,
+        ]);
+    }
+
+    /**
      * POST api/v1/competition/subscribe
      *
      * Iscrizione a una gara.
