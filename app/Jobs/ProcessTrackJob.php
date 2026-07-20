@@ -63,7 +63,7 @@ class ProcessTrackJob implements ShouldQueue
                 'credits_earned' => $this->track->credits_earned,
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::channel('tracks')->error("ProcessTrackJob: Errore elaborazione traccia #{$this->track->id}", [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
