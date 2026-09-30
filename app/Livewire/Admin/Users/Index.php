@@ -11,6 +11,8 @@ class Index extends Component
 {
     use WithPagination;
 
+    private const PER_PAGE = 15;
+
     // Filtri
     public string $searchId = '';
     public string $searchEmail = '';
@@ -25,6 +27,10 @@ class Index extends Component
     public ?int $deletingId = null;
     public ?string $deletingName = null;
 
+    // Selezione multipla
+    public array $selected = [];
+    public bool $showBulkDeleteModal = false;
+
     protected $queryString = [
         'searchId' => ['except' => ''],
         'searchEmail' => ['except' => ''],
@@ -34,6 +40,14 @@ class Index extends Component
         'filterDateFrom' => ['except' => ''],
         'filterDateTo' => ['except' => ''],
     ];
+
+    public function updating(string $property): void
+    {
+        // Cambiando i filtri la selezione non sarebbe più visibile: si azzera
+        if (str_starts_with($property, 'search') || str_starts_with($property, 'filter')) {
+            $this->selected = [];
+        }
+    }
 
     public function updatingSearchId(): void
     {
@@ -80,8 +94,80 @@ class Index extends Component
             'filterPlatform',
             'filterDateFrom',
             'filterDateTo',
+            'selected',
         ]);
         $this->resetPage();
+    }
+
+    /**
+     * Seleziona/deseleziona tutti gli utenti eliminabili della pagina corrente.
+     */
+    public function toggleSelectPage(): void
+    {
+        $pageIds = $this->deletablePageIds();
+
+        if ($pageIds && !array_diff($pageIds, $this->selected)) {
+            $this->selected = array_values(array_diff($this->selected, $pageIds));
+        } else {
+            $this->selected = array_values(array_unique(array_merge($this->selected, $pageIds)));
+        }
+    }
+
+    public function clearSelection(): void
+    {
+        $this->selected = [];
+    }
+
+    public function confirmBulkDelete(): void
+    {
+        if ($this->selected) {
+            $this->showBulkDeleteModal = true;
+        }
+    }
+
+    public function bulkDelete(): void
+    {
+        $deleted = 0;
+        $skipped = 0;
+
+        User::with('enteProfile')->whereIn('id', $this->selected)->get()->each(function (User $user) use (&$deleted, &$skipped) {
+            if (!$this->canBeDeleted($user)) {
+                $skipped++;
+                return;
+            }
+
+            $user->delete();
+            $deleted++;
+        });
+
+        $message = "{$deleted} utenti eliminati con successo.";
+        if ($skipped) {
+            $message .= " {$skipped} esclusi (Super Admin o ente GoodGo default).";
+        }
+        session()->flash('message', $message);
+
+        $this->selected = [];
+        $this->showBulkDeleteModal = false;
+        $this->resetPage();
+    }
+
+    private function canBeDeleted(User $user): bool
+    {
+        return !$user->isSuperAdmin() && !($user->isEnte() && $user->enteProfile?->is_default);
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function deletablePageIds(): array
+    {
+        return $this->buildQuery()
+            ->with('enteProfile')
+            ->paginate(self::PER_PAGE)
+            ->getCollection()
+            ->filter(fn (User $user) => $this->canBeDeleted($user))
+            ->pluck('id')
+            ->all();
     }
 
     public function confirmDelete(int $id): void
@@ -127,12 +213,9 @@ class Index extends Component
         $this->deletingName = null;
     }
 
-    public function render()
+    private function buildQuery()
     {
-        $query = User::query()
-            ->with(['profile', 'partnerProfile', 'enteProfile'])
-            ->withCount(['competitions', 'tracks'])
-            ->orderByDesc('created_at');
+        $query = User::query()->orderByDesc('created_at');
 
         // Filtro per ID
         if ($this->searchId) {
@@ -169,8 +252,24 @@ class Index extends Component
             $query->whereDate('created_at', '<=', $this->filterDateTo);
         }
 
+        return $query;
+    }
+
+    public function render()
+    {
+        $users = $this->buildQuery()
+            ->with(['profile', 'partnerProfile', 'enteProfile'])
+            ->withCount(['competitions', 'tracks'])
+            ->paginate(self::PER_PAGE);
+
+        $deletableIds = $users->getCollection()
+            ->filter(fn (User $user) => $this->canBeDeleted($user))
+            ->pluck('id')
+            ->all();
+
         return view('livewire.admin.users.index', [
-            'users' => $query->paginate(15),
+            'users' => $users,
+            'pageSelected' => $deletableIds && !array_diff($deletableIds, array_map('intval', $this->selected)),
             'userTypes' => UserType::cases(),
             'platforms' => ['ios', 'android', 'web'],
         ]);

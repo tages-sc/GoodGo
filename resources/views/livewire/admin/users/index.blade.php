@@ -89,11 +89,27 @@
                         </div>
                     </div>
 
+                    {{-- Azioni di massa --}}
+                    @if(count($selected) > 0)
+                        <div class="flex items-center justify-between bg-indigo-50 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800 rounded-lg px-4 py-3 mb-4">
+                            <span class="text-sm text-indigo-800 dark:text-indigo-200">
+                                <strong>{{ count($selected) }}</strong> utenti selezionati
+                                <button wire:click="clearSelection" class="ml-2 underline hover:no-underline">Deseleziona</button>
+                            </span>
+                            <x-danger-button wire:click="confirmBulkDelete">
+                                Elimina selezionati
+                            </x-danger-button>
+                        </div>
+                    @endif
+
                     {{-- Tabella --}}
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
+                                    <th class="px-4 py-3 w-8">
+                                        <input type="checkbox" wire:click="toggleSelectPage" @checked($pageSelected) class="rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" title="Seleziona tutti quelli della pagina">
+                                    </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">ID</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipo</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Utente</th>
@@ -108,7 +124,12 @@
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @forelse ($users as $user)
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <tr wire:key="user-{{ $user->id }}" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <td class="px-4 py-3">
+                                            @if(!$user->isSuperAdmin() && !($user->isEnte() && $user->enteProfile?->is_default))
+                                                <input type="checkbox" wire:model.live="selected" value="{{ $user->id }}" class="rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800">
+                                            @endif
+                                        </td>
                                         <td class="px-4 py-3 whitespace-nowrap">
                                             <span class="text-sm text-gray-900 dark:text-gray-100 font-mono">{{ $user->id }}</span>
                                         </td>
@@ -210,7 +231,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="10" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                        <td colspan="11" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                             Nessun utente trovato.
                                         </td>
                                     </tr>
@@ -248,6 +269,31 @@
             </x-secondary-button>
 
             <x-danger-button class="ms-3" wire:click="delete">
+                Elimina
+            </x-danger-button>
+        </x-slot>
+    </x-confirmation-modal>
+
+    {{-- Modal Conferma Eliminazione Multipla --}}
+    <x-confirmation-modal wire:model.live="showBulkDeleteModal">
+        <x-slot name="title">
+            Elimina Utenti Selezionati
+        </x-slot>
+
+        <x-slot name="content">
+            Sei sicuro di voler eliminare <strong>{{ count($selected) }}</strong> utenti?
+            <br><br>
+            Tutti i dati associati (tracce, movimenti, spese, iscrizioni) verranno rimossi.
+            <br>
+            <span class="text-red-600 dark:text-red-400 font-medium">Questa azione non può essere annullata.</span>
+        </x-slot>
+
+        <x-slot name="footer">
+            <x-secondary-button wire:click="$set('showBulkDeleteModal', false)">
+                Annulla
+            </x-secondary-button>
+
+            <x-danger-button class="ms-3" wire:click="bulkDelete" wire:loading.attr="disabled">
                 Elimina
             </x-danger-button>
         </x-slot>

@@ -6,6 +6,7 @@ use App\Enums\UserType;
 use App\Models\PartnerProfile;
 use App\Models\PolicyVersion;
 use App\Models\User;
+use App\Services\RegistrationThrottle;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +53,11 @@ class RegisterPartner extends Component
 
     public function register(): void
     {
+        if ($seconds = RegistrationThrottle::availableIn(request()->ip())) {
+            $this->addError('email', RegistrationThrottle::message($seconds));
+            return;
+        }
+
         $this->validate();
 
         DB::transaction(function () {
@@ -85,6 +91,8 @@ class RegisterPartner extends Component
 
             Auth::login($user);
         });
+
+        RegistrationThrottle::hit(request()->ip());
 
         // Redirect al profilo per completare i dati
         $this->redirect(route('profile.show'), navigate: true);

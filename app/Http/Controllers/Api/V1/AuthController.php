@@ -8,6 +8,7 @@ use App\Models\PolicyVersion;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Services\BadgeService;
+use App\Services\RegistrationThrottle;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -56,6 +57,10 @@ class AuthController extends ApiController
      */
     public function signup(Request $request): JsonResponse
     {
+        if ($seconds = RegistrationThrottle::availableIn($request->ip())) {
+            return $this->error(100, RegistrationThrottle::message($seconds), 429);
+        }
+
         $validator = Validator::make($request->all(), [
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8'],
@@ -104,6 +109,8 @@ class AuthController extends ApiController
 
             return $user;
         });
+
+        RegistrationThrottle::hit($request->ip());
 
         // Invia email di verifica
         $user->sendEmailVerificationNotification();

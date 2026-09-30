@@ -8,10 +8,12 @@ use App\Models\PolicyVersion;
 use App\Models\User;
 use App\Models\UserProfile;
 use App\Services\BadgeService;
+use App\Services\RegistrationThrottle;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 use Laravel\Jetstream\Jetstream;
 
@@ -26,6 +28,12 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
+        if ($seconds = RegistrationThrottle::availableIn(request()->ip())) {
+            throw ValidationException::withMessages([
+                'email' => RegistrationThrottle::message($seconds),
+            ]);
+        }
+
         Validator::make($input, [
             'name' => ['required', 'string', 'max:255'],
             'surname' => ['required', 'string', 'max:255'],
@@ -69,6 +77,8 @@ class CreateNewUser implements CreatesNewUsers
 
             return $user;
         });
+
+        RegistrationThrottle::hit(request()->ip());
 
         // Assegna badge "Nuovo Utente" (fuori dalla transazione per evitare problemi con notifiche)
         try {
