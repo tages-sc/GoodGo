@@ -3,5 +3,11 @@
     "Whoops!": "Ops!",
     "Regards,": "Cordiali saluti,",
     "All rights reserved.": "Tutti i diritti riservati.",
-    "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\ninto your web browser:": "Se hai difficoltà a cliccare il pulsante \":actionText\", copia e incolla nel browser l'indirizzo qui sotto:"
+    "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\ninto your web browser:": "Se hai difficoltà a cliccare il pulsante \":actionText\", copia e incolla nel browser l'indirizzo qui sotto:",
+    "Before continuing, could you verify your email address by clicking on the link we just emailed to you? If you didn't receive the email, we will gladly send you another.": "Prima di continuare, conferma il tuo indirizzo email cliccando sul link che ti abbiamo appena inviato. Se non hai ricevuto l'email, possiamo inviartene un'altra.",
+    "Can't find the email? Check your Spam or Junk folder too, and mark GoodGo as a trusted sender.": "Non trovi l'email? Controlla anche la cartella Spam o Posta indesiderata e segnala GoodGo come mittente attendibile.",
+    "A new verification link has been sent to the email address you provided in your profile settings.": "Un nuovo link di verifica è stato inviato all'indirizzo email indicato nel tuo profilo.",
+    "Resend Verification Email": "Invia di nuovo l'email di verifica",
+    "Edit Profile": "Modifica profilo",
+    "Log Out": "Esci"
 }

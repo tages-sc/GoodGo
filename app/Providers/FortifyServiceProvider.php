@@ -84,6 +84,7 @@ class FortifyServiceProvider extends ServiceProvider
                 ->line('Manca solo un passaggio: conferma il tuo indirizzo email per completare la registrazione e iniziare a guadagnare crediti con i tuoi spostamenti.')
                 ->action('Conferma la mia email', $url)
                 ->line("Per la tua sicurezza, il link è valido per {$expireMinutes} minuti.")
+                ->line('Se questa email è finita nella cartella Spam o Posta indesiderata, segnala GoodGo come mittente attendibile: così riceverai regolarmente anche le prossime comunicazioni.')
                 ->line('Se non sei stato tu a registrarti su GoodGo, ignora pure questa email.')
                 ->salutation('Il team di GoodGo');
         });
