@@ -21,6 +21,14 @@ class TrackValidationService
     protected bool $dryRun = false;
 
     /**
+     * Validazione manuale (admin/ente/organizzatore): si superano gli errori di
+     * rilevazione (velocità, fermate/stazioni), mentre i crediti seguono comunque le
+     * regole della documentazione e della gara (auto/moto, TPL fuori area, territorio
+     * e modalità non ammesse non accreditati; tariffe e limiti della gara).
+     */
+    protected bool $forceValid = false;
+
+    /**
      * Risultato della validazione
      */
     protected array $result = [
@@ -76,11 +84,22 @@ class TrackValidationService
     }
 
     /**
+     * Validazione manuale: ricalcola segmenti, metriche e crediti della traccia come
+     * valida. Non assegna i crediti all'utente: lo fa TrackValidationManager sulla
+     * differenza rispetto a quelli già assegnati.
+     */
+    public function validateManually(Track $track): array
+    {
+        return $this->performValidation($track, dryRun: false, forceValid: true);
+    }
+
+    /**
      * Esegue la validazione (comune a validate e dryRun)
      */
-    protected function performValidation(Track $track, bool $dryRun = false): array
+    protected function performValidation(Track $track, bool $dryRun = false, bool $forceValid = false): array
     {
         $this->dryRun = $dryRun;
+        $this->forceValid = $forceValid;
 
         $this->result = [
             'is_valid' => true,
@@ -113,7 +132,9 @@ class TrackValidationService
 
         // Se non ci sono segmenti, la traccia non è valida
         if ($track->segments->isEmpty()) {
-            return $this->invalidate($track, 'La traccia non contiene segmenti validi.');
+            return $this->forceValid
+                ? $this->result
+                : $this->invalidate($track, 'La traccia non contiene segmenti validi.');
         }
 
         // Valida ogni segmento
@@ -130,7 +151,7 @@ class TrackValidationService
         }
 
         // Determina stato finale
-        if ($this->result['valid_distance_meters'] <= 0) {
+        if ($this->result['valid_distance_meters'] <= 0 && !$this->forceValid) {
             return $this->invalidate($track, 'Nessun segmento valido trovato.');
         }
 
@@ -158,8 +179,7 @@ class TrackValidationService
         $speedCheck = $this->checkSpeed($segment);
         $validationDetails['speed_check'] = $speedCheck;
         if (!$speedCheck['passed']) {
-            $isValid = false;
-            $rejectionReason = $speedCheck['reason'];
+            $this->failCheck($isValid, $isNotCredited, $rejectionReason, $validationDetails, $speedCheck['reason']);
         }
 
         // 2. Controllo trasporto pubblico (treno/bus)
@@ -167,8 +187,7 @@ class TrackValidationService
             $publicTransportCheck = $this->checkPublicTransport($segment);
             $validationDetails['public_transport_check'] = $publicTransportCheck;
             if (!$publicTransportCheck['passed']) {
-                $isValid = false;
-                $rejectionReason = $publicTransportCheck['reason'];
+                $this->failCheck($isValid, $isNotCredited, $rejectionReason, $validationDetails, $publicTransportCheck['reason']);
             } elseif (!empty($publicTransportCheck['not_credited'])) {
                 // Bus fuori PI/LI: valida per statistiche ma non genera crediti
                 $isNotCredited = true;
@@ -186,8 +205,7 @@ class TrackValidationService
             $territoryCheck = $this->checkTerritory($segment, $track->competition);
             $validationDetails['territory_check'] = $territoryCheck;
             if (!$territoryCheck['passed']) {
-                $isValid = false;
-                $rejectionReason = $territoryCheck['reason'];
+                $this->failCheck($isValid, $isNotCredited, $rejectionReason, $validationDetails, $territoryCheck['reason'], competitionRule: true);
             }
         }
 
@@ -196,14 +214,16 @@ class TrackValidationService
             $modeCheck = $this->checkAllowedMode($segment, $track->competition);
             $validationDetails['mode_check'] = $modeCheck;
             if (!$modeCheck['passed']) {
-                $isValid = false;
-                $rejectionReason = $modeCheck['reason'];
+                $this->failCheck($isValid, $isNotCredited, $rejectionReason, $validationDetails, $modeCheck['reason'], competitionRule: true);
             }
         }
 
         // Calcola crediti (solo se valido E non "non accreditata")
         $creditsPerKm = $this->getCreditsPerKmForMode($segment->transport_mode, $track->competition);
         $generatesCredits = $isValid && !$isNotCredited && $segment->transport_mode->generatesCredits();
+        // Il flag salvato può venire da una validazione precedente (es. segmento scartato
+        // poi validato a mano): calculateCredits() deve usare l'esito attuale
+        $segment->generates_credits = $generatesCredits;
         $credits = $generatesCredits ? $segment->calculateCredits($creditsPerKm) : 0;
 
         // Calcola tutte le metriche (emissioni, calorie, costi)
@@ -290,6 +310,37 @@ class TrackValidationService
             $this->result['segments_invalid']++;
             $this->result['warnings'][] = "Segmento #{$segment->sequence}: {$rejectionReason}";
         }
+    }
+
+    /**
+     * Registra un controllo fallito: in validazione automatica il segmento diventa non valido.
+     * In validazione manuale si superano solo gli errori di rilevazione (velocità,
+     * fermate/stazioni); territorio e modalità ammesse sono regole della gara, quindi il
+     * segmento resta valido ma non accreditato (conta nelle statistiche, niente crediti).
+     */
+    protected function failCheck(
+        bool &$isValid,
+        bool &$isNotCredited,
+        ?string &$rejectionReason,
+        array &$validationDetails,
+        string $reason,
+        bool $competitionRule = false
+    ): void {
+        if (!$this->forceValid) {
+            $isValid = false;
+            $rejectionReason = $reason;
+
+            return;
+        }
+
+        if ($competitionRule) {
+            $isNotCredited = true;
+            $rejectionReason = $reason;
+
+            return;
+        }
+
+        $validationDetails['manual_overrides'][] = $reason;
     }
 
     /**
@@ -678,7 +729,11 @@ class TrackValidationService
         }
 
         // === 2. Verifica distanza minima globale della gara ===
-        $validDistanceKm = $this->result['valid_distance_meters'] / 1000;
+        // I limiti si applicano ai soli km che generano crediti: i tratti non accreditati
+        // (auto, moto, TPL fuori area) non devono far raggiungere il minimo né consumare i massimi
+        $validDistanceKm = collect($this->result['segments_details'])
+            ->where('generates_credits', true)
+            ->sum('distance_km');
 
         if ($competition->min_track_distance && $validDistanceKm < $competition->min_track_distance) {
             $this->result['warnings'][] = sprintf(
@@ -757,10 +812,10 @@ class TrackValidationService
      */
     protected function applyMaxDistancePerMode(array $maxDistancePerMode, Track $track): void
     {
-        // Calcola distanza per modalità dai segmenti validati
+        // Calcola distanza per modalità dai segmenti che generano crediti
         $distanceByMode = [];
         foreach ($this->result['segments_details'] as $detail) {
-            if ($detail['is_valid']) {
+            if ($detail['generates_credits']) {
                 $mode = $detail['transport_mode'];
                 $distanceByMode[$mode] = ($distanceByMode[$mode] ?? 0) + $detail['distance_km'];
             }
@@ -802,10 +857,11 @@ class TrackValidationService
             return;
         }
 
-        // Calcola distanza per modalità dai segmenti validati di questa traccia
+        // Calcola distanza per modalità dai segmenti di questa traccia che generano crediti
+        // (stesso criterio delle tracce già validate oggi: solo segmenti accreditati)
         $distanceByMode = [];
         foreach ($this->result['segments_details'] as $detail) {
-            if ($detail['is_valid']) {
+            if ($detail['generates_credits']) {
                 $mode = $detail['transport_mode'];
                 $distanceByMode[$mode] = ($distanceByMode[$mode] ?? 0) + $detail['distance_km'];
             }
@@ -999,7 +1055,8 @@ class TrackValidationService
         ]);
 
         // Aggiorna saldo crediti utente tramite CreditService
-        if ($this->result['credits_earned'] > 0) {
+        // (in validazione manuale lo fa TrackValidationManager sulla differenza)
+        if ($this->result['credits_earned'] > 0 && !$this->forceValid) {
             $this->creditService->addCredits(
                 $track->user,
                 $this->result['credits_earned'],
@@ -1014,39 +1071,13 @@ class TrackValidationService
             );
         }
 
-        // Aggiorna statistiche gara
-        if ($track->competition && $this->result['is_valid']) {
-            $this->updateCompetitionStats($track);
-        }
+        // Le statistiche di classifica della gara si ricalcolano da sole
+        // all'aggiornamento della traccia (Track::booted), salvo gare terminate
 
         // Controlla e assegna badge (solo per tracce valide)
         if ($this->result['is_valid']) {
             $this->badgeService->checkAndAward($track->user);
         }
-    }
-
-    /**
-     * Aggiorna le statistiche della gara e dell'utente nella gara
-     */
-    protected function updateCompetitionStats(Track $track): void
-    {
-        // Aggiorna pivot competition_user
-        $pivotData = $track->competition->users()
-            ->where('user_id', $track->user_id)
-            ->first()?->pivot;
-
-        if ($pivotData) {
-            $track->competition->users()->updateExistingPivot($track->user_id, [
-                'tracks_count' => ($pivotData->tracks_count ?? 0) + 1,
-                'total_distance_km' => ($pivotData->total_distance_km ?? 0) + ($this->result['valid_distance_meters'] / 1000),
-                'total_credits' => ($pivotData->total_credits ?? 0) + $this->result['credits_earned'],
-                'total_co2_saved_kg' => ($pivotData->total_co2_saved_kg ?? 0) + ($this->result['co2_saved_grams'] / 1000),
-            ]);
-        }
-
-        // Aggiorna statistiche cache della gara
-        $track->competition->updateStatistics();
-        $track->competition->recalculateRanks();
     }
 
     /**

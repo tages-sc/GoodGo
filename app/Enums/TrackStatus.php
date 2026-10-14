@@ -37,6 +37,16 @@ enum TrackStatus: string
         return array_column(self::cases(), 'value');
     }
 
+    /**
+     * Stati che contano nelle statistiche km: valide e non accreditate
+     * ("valida per statistiche, no crediti": TPL fuori area, auto, moto).
+     * Gli stessi valori valgono anche per lo stato dei segmenti.
+     */
+    public static function statisticsValues(): array
+    {
+        return [self::VALID->value, self::NOT_CREDITED->value];
+    }
+
     public function badgeClasses(): string
     {
         return match ($this) {

@@ -7,6 +7,7 @@ use App\Enums\CompetitionType;
 use App\Enums\ExtensionType;
 use App\Enums\RewardMode;
 use App\Enums\ScoringType;
+use App\Enums\TrackStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -540,5 +541,76 @@ class Competition extends Model
             $this->users()->updateExistingPivot($user->id, ['rank' => $rank]);
             $rank++;
         }
+    }
+
+    /**
+     * Ricalcola dalle tracce i totali di classifica di un iscritto, poi
+     * statistiche della gara e posizioni.
+     */
+    public function refreshLeaderboardForUser(int $userId): void
+    {
+        if ($this->isLeaderboardFrozen()) {
+            return;
+        }
+
+        $this->recalculateUserTotals($userId);
+        $this->updateStatistics();
+        $this->recalculateRanks();
+    }
+
+    /**
+     * Ricalcola dalle tracce i totali di tutti gli iscritti (riallineamento completo).
+     */
+    public function refreshLeaderboard(): void
+    {
+        if ($this->isLeaderboardFrozen()) {
+            return;
+        }
+
+        foreach ($this->users()->pluck('users.id') as $userId) {
+            $this->recalculateUserTotals($userId);
+        }
+
+        $this->updateStatistics();
+        $this->recalculateRanks();
+    }
+
+    /**
+     * A gara terminata la classifica pubblicata resta definitiva:
+     * modifiche successive alle tracce non la ricalcolano.
+     */
+    public function isLeaderboardFrozen(): bool
+    {
+        return $this->status === CompetitionStatus::ENDED;
+    }
+
+    /**
+     * Totali di classifica di un iscritto calcolati dalle tracce valide e non
+     * accreditate (crediti e CO2 come calcolati in validazione). I km sono solo
+     * quelli accreditati: auto, moto e TPL fuori area non contano in classifica.
+     */
+    private function recalculateUserTotals(int $userId): void
+    {
+        $tracks = Track::where('competition_id', $this->id)
+            ->where('user_id', $userId)
+            ->whereIn('status', [TrackStatus::VALID, TrackStatus::NOT_CREDITED]);
+
+        $stats = (clone $tracks)
+            ->selectRaw('COUNT(*) as tracks')
+            ->selectRaw('COALESCE(SUM(credits_earned), 0) as credits')
+            ->selectRaw('COALESCE(SUM(co2_saved_grams), 0) as co2_grams')
+            ->first();
+
+        $creditedMeters = TrackSegment::whereIn('track_id', (clone $tracks)->select('id'))
+            ->where('status', 'valid')
+            ->where('generates_credits', true)
+            ->sum('distance_meters');
+
+        $this->users()->updateExistingPivot($userId, [
+            'tracks_count' => $stats->tracks,
+            'total_distance_km' => $creditedMeters / 1000,
+            'total_credits' => $stats->credits,
+            'total_co2_saved_kg' => $stats->co2_grams / 1000,
+        ]);
     }
 }

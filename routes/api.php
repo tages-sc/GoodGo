@@ -15,10 +15,11 @@ use Illuminate\Support\Facades\Route;
 |
 | Tutti gli endpoint sono protetti dal middleware api.secret (header secret-key).
 | Gli endpoint autenticati richiedono anche Bearer Token (auth:sanctum).
+| api.multipart rende leggibili i body multipart/form-data inviati con PUT/PATCH.
 |
 */
 
-Route::prefix('v1')->middleware(['api.secret', 'api.locale'])->group(function () {
+Route::prefix('v1')->middleware(['api.secret', 'api.locale', 'api.multipart'])->group(function () {
 
     // ==================== CONFIGURAZIONE ====================
     Route::get('/configuration', ConfigurationController::class);

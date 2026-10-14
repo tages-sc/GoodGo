@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\TrackStatus;
 use App\Models\Track;
 use App\Notifications\TrackValidationNotification;
 use App\Services\TrackValidationService;
@@ -43,6 +44,15 @@ class ProcessTrackJob implements ShouldQueue
      */
     public function handle(TrackValidationService $validationService): void
     {
+        // Traccia già validata o invalidata nel frattempo (es. validazione manuale):
+        // rielaborarla accrediterebbe i crediti una seconda volta
+        $this->track->refresh();
+        if (in_array($this->track->status, [TrackStatus::VALID, TrackStatus::INVALID, TrackStatus::NOT_CREDITED], true)) {
+            Log::channel('tracks')->info("ProcessTrackJob: traccia #{$this->track->id} già in stato {$this->track->status->value}, elaborazione saltata");
+
+            return;
+        }
+
         Log::channel('tracks')->info("ProcessTrackJob: Inizio elaborazione traccia #{$this->track->id}");
 
         try {

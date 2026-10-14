@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Enums\MovementStatus;
+use App\Enums\TrackStatus;
 use App\Enums\TransportMode;
 use App\Models\Badge;
 use App\Models\TrackSegment;
@@ -40,15 +41,15 @@ class Dashboard extends Component
                 ->sum('credits_amount'),
         ];
 
-        // Km per modalita di trasporto
-        $sustainableModes = [TransportMode::BIKE, TransportMode::WALK, TransportMode::TRAIN, TransportMode::BUS];
+        // Km per modalita di trasporto: segmenti validi e non accreditati
+        // (TPL fuori area, auto, moto: validi per le statistiche, senza crediti)
         $kmByMode = [];
-        foreach ($sustainableModes as $mode) {
+        foreach (TransportMode::cases() as $mode) {
             $totalMeters = TrackSegment::whereHas('track', function ($q) use ($user) {
-                    $q->where('user_id', $user->id)->valid();
+                    $q->where('user_id', $user->id)->whereIn('status', TrackStatus::statisticsValues());
                 })
                 ->where('transport_mode', $mode)
-                ->where('status', 'valid')
+                ->whereIn('status', TrackStatus::statisticsValues())
                 ->sum('distance_meters');
 
             if ($totalMeters > 0) {

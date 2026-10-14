@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\CompetitionStatus;
+use App\Enums\TrackStatus;
 use App\Enums\TransportMode;
 use App\Models\Competition;
+use App\Models\Track;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -117,8 +119,25 @@ class CompetitionController extends ApiController
             'request_more_data' => $competition->request_more_data ?? false,
             'documents' => $documents,
             'leaderboard' => $leaderboard,
-            'results' => [],
+            'results' => $this->formatResults($competition),
         ]);
+    }
+
+    /**
+     * Risultati complessivi della gara: gli stessi valori del riquadro
+     * "Statistiche" del dettaglio gara nel backoffice (km in km, CO2 in kg).
+     */
+    private function formatResults(Competition $competition): array
+    {
+        $tracks = Track::where('competition_id', $competition->id);
+
+        return [
+            ['type' => 'participants', 'value' => (int) ($competition->participants_count ?? 0)],
+            ['type' => 'tracks', 'value' => (clone $tracks)->count()],
+            ['type' => 'valid_tracks', 'value' => (clone $tracks)->where('status', TrackStatus::VALID)->count()],
+            ['type' => 'km', 'value' => round((float) ($competition->total_distance_km ?? 0), 2)],
+            ['type' => 'co2', 'value' => round((float) ($competition->total_co2_saved_kg ?? 0), 2)],
+        ];
     }
 
     /**

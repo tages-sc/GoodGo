@@ -79,6 +79,40 @@ class Track extends Model
         'avg_speed_ms' => 'decimal:4',
     ];
 
+    /**
+     * Classifica della gara ricalcolata dai dati a ogni cambio rilevante della traccia:
+     * validazione automatica, validazione/invalidazione manuale, modifiche ai segmenti e cancellazione.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (Track $track) {
+            if (!$track->wasChanged(['status', 'competition_id', 'valid_distance_meters', 'credits_earned', 'co2_saved_grams'])) {
+                return;
+            }
+
+            static::refreshCompetitionLeaderboard($track->competition_id, $track->user_id);
+
+            if ($track->wasChanged('competition_id')) {
+                static::refreshCompetitionLeaderboard($track->getOriginal('competition_id'), $track->user_id);
+            }
+        });
+
+        static::deleted(function (Track $track) {
+            static::refreshCompetitionLeaderboard($track->competition_id, $track->user_id);
+        });
+    }
+
+    /**
+     * La gara si rilegge dal database: la relazione già caricata può avere
+     * uno stato superato (es. gara chiusa nel frattempo).
+     */
+    private static function refreshCompetitionLeaderboard(?int $competitionId, int $userId): void
+    {
+        if ($competitionId) {
+            Competition::find($competitionId)?->refreshLeaderboardForUser($userId);
+        }
+    }
+
     // Relationships
 
     public function user(): BelongsTo

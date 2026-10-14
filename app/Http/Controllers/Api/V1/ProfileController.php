@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ProfileController extends ApiController
 {
@@ -88,8 +89,17 @@ class ProfileController extends ApiController
             $user->tutorial = filter_var($request->input('tutorial'), FILTER_VALIDATE_BOOLEAN);
         }
 
-        // Upload immagine profilo
+        // Upload immagine profilo (solo immagini: il file finisce nello storage pubblico)
         if ($request->hasFile('image')) {
+            $validator = Validator::make(
+                ['image' => $request->file('image')],
+                ['image' => ['mimes:jpg,jpeg,png', 'max:5120']]
+            );
+
+            if ($validator->fails()) {
+                return $this->error(100, $validator->errors()->first(), 422);
+            }
+
             $user->updateProfilePhoto($request->file('image'));
         }
 
@@ -106,12 +116,16 @@ class ProfileController extends ApiController
                 $profile->birth_date = $extraFields['birth_date'];
             }
 
-            if (isset($extraFields['main_location'])) {
-                $currentExtra['main_location'] = $extraFields['main_location'];
-            }
-
-            if (isset($extraFields['second_location'])) {
-                $currentExtra['second_location'] = $extraFields['second_location'];
+            // Con multipart/form-data lat e lng arrivano come stringhe: si salvano come numeri
+            foreach (['main_location', 'second_location'] as $locationKey) {
+                if (isset($extraFields[$locationKey]) && is_array($extraFields[$locationKey])) {
+                    $location = $extraFields[$locationKey];
+                    $currentExtra[$locationKey] = [
+                        'lat' => (float) ($location['lat'] ?? 0),
+                        'lng' => (float) ($location['lng'] ?? 0),
+                        'address' => (string) ($location['address'] ?? ''),
+                    ];
+                }
             }
 
             if (isset($extraFields['occupation'])) {
@@ -200,44 +214,58 @@ class ProfileController extends ApiController
         $now = Carbon::now();
 
         for ($i = 0; $i < 3; $i++) {
-            $date = $now->copy()->subMonths($i);
+            // NoOverflow: dal 29 al 31 subMonths() scavalcherebbe il mese precedente (es. 31 ott -> 1 ott)
+            $date = $now->copy()->subMonthsNoOverflow($i);
             $monthName = strtolower($date->translatedFormat('F'));
 
-            $tracks = Track::where('user_id', $user->id)
-                ->where('status', TrackStatus::VALID)
-                ->whereYear('started_at', $date->year)
-                ->whereMonth('started_at', $date->month)
-                ->with('segments')
-                ->get();
-
-            $kmByMode = ['walk' => 0, 'bicycle' => 0, 'scooter' => 0, 'public_transport' => 0];
-
-            foreach ($tracks as $track) {
-                foreach ($track->segments as $segment) {
-                    $apiName = $segment->transport_mode->apiName();
-                    $km = round($segment->distance_meters / 1000, 2);
-
-                    // bicycle e scooter usano lo stesso apiName per bike
-                    if ($apiName === 'bicycle') {
-                        $kmByMode['bicycle'] += $km;
-                    } elseif ($apiName === 'public_transport') {
-                        $kmByMode['public_transport'] += $km;
-                    } elseif ($apiName === 'walk') {
-                        $kmByMode['walk'] += $km;
-                    }
-                    // scooter è mappato su bicycle nel TransportMode
-                }
-            }
+            $kmByMode = $this->getStatisticsKmByMode($user->id, function ($query) use ($date) {
+                $query->whereYear('tracks.started_at', $date->year)
+                    ->whereMonth('tracks.started_at', $date->month);
+            });
 
             $months[$monthName] = [
-                'walk' => round($kmByMode['walk']),
-                'bicycle' => round($kmByMode['bicycle']),
-                'scooter' => 0, // bike/scooter condividono BIKE nel model
-                'public_transport' => round($kmByMode['public_transport']),
+                'walk' => $kmByMode['walk'],
+                'bicycle' => $kmByMode['bicycle'],
+                'scooter' => 0, // bici e monopattino arrivano dall'app con lo stesso codice (BIKE): confluiscono in bicycle
+                'public_transport' => $kmByMode['public_transport'],
             ];
         }
 
         return $months;
+    }
+
+    /**
+     * Km per modalità API dei segmenti validi e non accreditati,
+     * con lo stesso criterio delle statistiche della dashboard web.
+     * Treno e autobus confluiscono in public_transport; auto e moto
+     * non hanno una voce API e contano solo nel totale.
+     */
+    private function getStatisticsKmByMode(int $userId, ?callable $scope = null): array
+    {
+        $query = DB::table('track_segments')
+            ->join('tracks', 'track_segments.track_id', '=', 'tracks.id')
+            ->where('tracks.user_id', $userId)
+            ->whereIn('tracks.status', TrackStatus::statisticsValues())
+            ->whereIn('track_segments.status', TrackStatus::statisticsValues())
+            ->select('track_segments.transport_mode', DB::raw('SUM(track_segments.distance_meters) as total_meters'))
+            ->groupBy('track_segments.transport_mode');
+
+        if ($scope) {
+            $scope($query);
+        }
+
+        $meters = ['walk' => 0, 'bicycle' => 0, 'public_transport' => 0, 'total' => 0];
+
+        foreach ($query->get() as $row) {
+            $apiName = TransportMode::from($row->transport_mode)->apiName();
+
+            if (array_key_exists($apiName, $meters)) {
+                $meters[$apiName] += $row->total_meters;
+            }
+            $meters['total'] += $row->total_meters;
+        }
+
+        return array_map(fn($value) => round($value / 1000, 2), $meters);
     }
 
     /**
@@ -249,30 +277,14 @@ class ProfileController extends ApiController
             ->where('status', TrackStatus::VALID)
             ->get();
 
-        $totalKm = $validTracks->sum('total_distance_meters') / 1000;
-
-        // Km per modalità
-        $segmentStats = DB::table('track_segments')
-            ->join('tracks', 'track_segments.track_id', '=', 'tracks.id')
-            ->where('tracks.user_id', $user->id)
-            ->where('tracks.status', TrackStatus::VALID->value)
-            ->select('track_segments.transport_mode', DB::raw('SUM(track_segments.distance_meters) as total_meters'))
-            ->groupBy('track_segments.transport_mode')
-            ->get()
-            ->keyBy('transport_mode');
-
-        $walkKm = round(($segmentStats->get('walk')?->total_meters ?? 0) / 1000);
-        $bikeKm = round(($segmentStats->get('bike')?->total_meters ?? 0) / 1000);
-        $busKm = round(($segmentStats->get('bus')?->total_meters ?? 0) / 1000);
-        $trainKm = round(($segmentStats->get('train')?->total_meters ?? 0) / 1000);
-        $tplKm = $busKm + $trainKm;
+        $kmByMode = $this->getStatisticsKmByMode($user->id);
 
         return [
-            'total_km' => round($totalKm),
-            'total_km_by_walk' => $walkKm,
-            'total_km_by_bicycle' => $bikeKm,
+            'total_km' => $kmByMode['total'],
+            'total_km_by_walk' => $kmByMode['walk'],
+            'total_km_by_bicycle' => $kmByMode['bicycle'],
             'total_km_by_scooter' => 0,
-            'total_km_by_public_transport' => $tplKm,
+            'total_km_by_public_transport' => $kmByMode['public_transport'],
             'total_co2' => round($validTracks->sum('co2_saved_grams') / 1000), // grammi -> kg
             'total_gekoin' => round($validTracks->sum('credits_earned')),
             'total_calories' => round($validTracks->sum('calories_burned')),

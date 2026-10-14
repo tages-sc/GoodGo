@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'partner.profile.complete' => \App\Http\Middleware\EnsurePartnerProfileComplete::class,
             'api.secret' => \App\Http\Middleware\CheckSecretKey::class,
             'api.locale' => \App\Http\Middleware\SetApiLocale::class,
+            'api.multipart' => \App\Http\Middleware\ParseMultipartPutRequest::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -11,54 +11,65 @@ use App\Notifications\TrackValidationNotification;
 class TrackValidationManager
 {
     public function __construct(
-        protected CreditService $creditService
+        protected CreditService $creditService,
+        protected TrackValidationService $validationService
     ) {}
 
     /**
-     * Valida una traccia: aggiorna stato, ripristina segmenti non validi,
-     * ricalcola metriche, accredita i crediti e notifica l'utente.
-     * Ritorna il delta crediti applicato (>= 0).
+     * Valida manualmente una traccia: ricalcola segmenti, metriche e crediti con le
+     * regole della gara (TrackValidationService::validateManually), accredita o
+     * storna la differenza rispetto ai crediti già assegnati e notifica l'utente.
+     * Ritorna il delta crediti applicato.
      */
     public function validate(Track $track, ?int $validatedBy = null): float
     {
         $previousStatus = $track->status;
+        // Solo una traccia già valida ha ricevuto crediti
+        $previousCredits = $previousStatus === TrackStatus::VALID ? (float) $track->credits_earned : 0.0;
 
-        $track->markAsValid($validatedBy);
+        $result = $this->validationService->validateManually($track);
 
-        foreach ($track->segments as $segment) {
-            if (!$segment->isValid()) {
-                $segment->markAsValid();
+        $track->refresh();
+        $track->update([
+            'validated_at' => now(),
+            'validated_by' => $validatedBy,
+        ]);
+
+        $creditsDelta = round((float) $track->credits_earned - $previousCredits, 4);
+
+        if ($creditsDelta > 0) {
+            $this->creditService->addCredits(
+                $track->user,
+                $creditsDelta,
+                CreditLogType::TRACK_VALIDATION,
+                "Validazione manuale traccia #{$track->id}",
+                $track
+            );
+        } elseif ($creditsDelta < 0) {
+            try {
+                $this->creditService->subtractCredits(
+                    $track->user,
+                    abs($creditsDelta),
+                    CreditLogType::MANUAL_SUBTRACT,
+                    "Ricalcolo crediti in validazione manuale traccia #{$track->id}",
+                    $track
+                );
+            } catch (\InvalidArgumentException $e) {
+                // Saldo insufficiente (crediti già spesi): nessuno storno
+                $creditsDelta = 0.0;
             }
         }
 
-        $track->recalculateFromSegments();
-        $track->refresh();
-
-        $creditsDelta = 0.0;
-
-        if ($previousStatus !== TrackStatus::VALID) {
-            $creditsEarned = (float) $track->credits_earned;
-
-            if ($creditsEarned > 0) {
-                $this->creditService->addCredits(
-                    $track->user,
-                    $creditsEarned,
-                    CreditLogType::TRACK_VALIDATION,
-                    "Validazione manuale traccia #{$track->id}",
-                    $track
-                );
-                $creditsDelta = $creditsEarned;
-            }
-
+        if ($previousStatus !== TrackStatus::VALID || $creditsDelta != 0) {
             $track->user->notify(new TrackValidationNotification($track, [
-                'warnings' => [],
+                'warnings' => $result['warnings'] ?? [],
             ]));
         }
 
         TrackValidationLog::create([
             'track_id' => $track->id,
             'previous_status' => $previousStatus,
-            'new_status' => TrackStatus::VALID,
+            'new_status' => $track->status,
             'reason' => null,
             'credits_delta' => $creditsDelta,
             'changed_by' => $validatedBy,

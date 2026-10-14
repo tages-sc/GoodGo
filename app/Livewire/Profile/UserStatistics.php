@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Profile;
 
+use App\Enums\TrackStatus;
 use App\Enums\TransportMode;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,12 +28,13 @@ class UserStatistics extends Component
             ')
             ->first();
 
-        // Distanze per modalita di trasporto dai segmenti delle tracce valide
+        // Distanze per modalita di trasporto dai segmenti validi e non accreditati
+        // (TPL fuori area, auto, moto: validi per le statistiche, senza crediti)
         $distancesByMode = DB::table('track_segments')
             ->join('tracks', 'tracks.id', '=', 'track_segments.track_id')
             ->where('tracks.user_id', $userId)
-            ->where('tracks.status', 'valid')
-            ->where('track_segments.status', 'valid')
+            ->whereIn('tracks.status', TrackStatus::statisticsValues())
+            ->whereIn('track_segments.status', TrackStatus::statisticsValues())
             ->groupBy('track_segments.transport_mode')
             ->selectRaw('track_segments.transport_mode, SUM(track_segments.distance_meters) as total_meters')
             ->pluck('total_meters', 'transport_mode');

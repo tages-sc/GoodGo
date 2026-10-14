@@ -818,6 +818,76 @@ class TrackValidationServiceTest extends TestCase
         $this->assertArrayHasKey('note', $publicTransport);
     }
 
+    // ==================== Limiti sui soli km accreditati ====================
+
+    public function test_min_track_distance_ignores_non_credited_km(): void
+    {
+        $competition = $this->createCompetition(['min_track_distance' => 1]);
+        $track = $this->createTrack($competition);
+        // 300 m a piedi (accreditabili) + 5 km in auto (mai accreditati)
+        $this->createSegment($track, [
+            'transport_mode' => TransportMode::WALK,
+            'distance_meters' => 300,
+            'duration_seconds' => 240,
+        ]);
+        $this->createSegment($track, [
+            'sequence' => 1,
+            'transport_mode' => TransportMode::CAR,
+            'distance_meters' => 5000,
+            'duration_seconds' => 600,
+        ]);
+
+        $result = $this->validationService->dryRun($track);
+
+        // L'auto non deve far raggiungere il minimo di 1 km al tratto a piedi
+        $this->assertGreaterThan(0, $result['segments_details'][0]['credits_earned']);
+        $this->assertEquals(0, $result['credits_earned']);
+    }
+
+    public function test_max_distance_per_mode_ignores_non_credited_bus_km(): void
+    {
+        $pisa = $this->createMunicipalityWithProvince('Pisa', 'PI', 43.7085000, 10.3993000);
+        $this->createBusStop('Pisa Stazione', 43.7085000, 10.3993000, $pisa->id);
+        $this->createBusStop('Pisa Ospedale', 43.7150000, 10.4013000, $pisa->id);
+        $this->createMunicipalityWithProvince('Firenze', 'FI', 43.7696000, 11.2558000);
+
+        $competition = $this->createCompetition(['max_distance_per_mode' => ['bus' => 2.0]]);
+        $track = $this->createTrack($competition);
+        // Bus a Pisa, 1,5 km accreditati
+        $this->createSegment($track, [
+            'transport_mode' => TransportMode::BUS,
+            'distance_meters' => 1500,
+            'max_chunk_speed_kmh' => null,
+            'avg_speed_ms' => 8.0,
+            'duration_seconds' => 420,
+            'start_latitude' => 43.7085500,
+            'start_longitude' => 10.3993000,
+            'end_latitude' => 43.7150000,
+            'end_longitude' => 10.4013000,
+        ]);
+        // Bus a Firenze, 2 km non accreditati (fuori PI/LI)
+        $this->createSegment($track, [
+            'sequence' => 1,
+            'transport_mode' => TransportMode::BUS,
+            'distance_meters' => 2000,
+            'max_chunk_speed_kmh' => null,
+            'avg_speed_ms' => 8.0,
+            'duration_seconds' => 480,
+            'start_latitude' => 43.7696000,
+            'start_longitude' => 11.2558000,
+            'end_latitude' => 43.7750000,
+            'end_longitude' => 11.2600000,
+        ]);
+
+        $result = $this->validationService->dryRun($track);
+
+        $this->assertTrue($result['segments_details'][1]['is_not_credited']);
+        $creditedBus = $result['segments_details'][0]['credits_earned'];
+        $this->assertGreaterThan(0, $creditedBus);
+        // 1,5 km accreditati restano sotto il massimo di 2 km: nessun taglio
+        $this->assertEqualsWithDelta($creditedBus, $result['credits_earned'], 0.0001);
+    }
+
     // ==================== Helper Methods ====================
 
     private function createCompetition(array $overrides = []): Competition
